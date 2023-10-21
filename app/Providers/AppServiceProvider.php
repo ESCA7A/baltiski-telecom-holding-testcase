@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->registerMigrations();
+    }
+
+    private function registerMigrations(): void
+    {
+        $this->loadMigrationsFrom(get_files_path_by_prefix('migrations')->toArray());
     }
 }

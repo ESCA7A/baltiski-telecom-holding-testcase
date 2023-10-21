@@ -2,16 +2,11 @@
 
 namespace App\Providers;
 
-use FilesystemIterator;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -29,45 +24,29 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
-        });
+        $this->rateLimitRegister();
 
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            Route::middleware('web')
-                ->group(base_path('routes/web.php'));
-
-            Route::middleware('api')
-                ->group($this->domainsRegister()->toArray());
+            $this->domainRoutesRegister();
         });
     }
 
-    private function domainsRegister(): Collection
+    private function rateLimitRegister(): void
     {
-        $path = base_path('app');
-        $recursiveIterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::KEY_AS_PATHNAME));
-        $routes  = collect();
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+    }
 
-        /**
-         * @var RecursiveDirectoryIterator $item
-         */
-        foreach ($recursiveIterator as $item) {
-            if ($item->isDir()) {
-                continue;
-            }
+    private function domainRoutesRegister(): void
+    {
+        $routes = get_files_path_by_prefix('routes')->toArray();
 
-            $path = $item->getPathname();
-            $pathContainRoutesDir = Str::contains($path, 'routes');
-
-            if ($pathContainRoutesDir) {
-                $routes->push($path);
-            }
-        }
-
-        return $routes;
+        Route::namespace($this->namespace)
+            ->group($routes);
     }
 }
