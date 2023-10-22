@@ -13,6 +13,7 @@ use function Laravel\Prompts\error;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\info;
+use function Laravel\Prompts\multiselect;
 
 class CreateModule extends Command
 {
@@ -47,13 +48,11 @@ class CreateModule extends Command
      */
     private Collection $modulesList;
 
-    /**
-     * Директория модуля
-     */
-    private Collection $module;
-
-    private array $generate = [
+    private array $directories = [
         'Actions',
+        'Controllers',
+        'routes',
+        'Admin',
         'database',
         'DTO',
         'Enums',
@@ -61,12 +60,17 @@ class CreateModule extends Command
         'Requests',
     ];
 
+    private array $defaultDirectories = [
+        'Actions',
+        'Controllers',
+        'routes',
+    ];
+
     public function __construct()
     {
         $this->domainPaths = get_domain_paths();
         $this->domainNames = get_domain_names();
         $this->modulesList = get_modules_list();
-        $this->module = collect($this->generate);
 
         parent::__construct();
     }
@@ -83,8 +87,14 @@ class CreateModule extends Command
 
     private function generateModule(string $path): void
     {
+        $directories = multiselect(
+            label: 'Создать директории ?',
+            options: $this->directories,
+            default: $this->defaultDirectories,
+        );
+
         $path = collect($path);
-        $newDirectories = $path->crossJoin($this->generate);
+        $newDirectories = $path->crossJoin($directories);
         $newDirectories = $newDirectories->map(fn ($directory) => implode('/', $directory));
 
         try {
