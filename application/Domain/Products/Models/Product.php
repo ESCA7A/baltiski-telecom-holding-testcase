@@ -1,6 +1,6 @@
 <?php
 
-namespace Domain\Products\Model;
+namespace Domain\Products\Models;
 
 use Domain\Products\database\factories\ProductFactory;
 use Domain\Products\Enums\Status;
@@ -21,9 +21,12 @@ class Product extends Model
 {
     use HasFactory, Notifiable;
 
+    protected $fillable = [
+        'name',
+    ];
     protected $casts = [
         'status' => Status::class,
-        'data' => 'array'
+        'data' => 'array',
     ];
 
     public function scopeAvailableProducts(Builder $query): void

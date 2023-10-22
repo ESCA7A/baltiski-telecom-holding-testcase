@@ -2,7 +2,7 @@
 
 namespace Domain\Products\database\factories;
 
-use Domain\Products\Model\Product;
+use Domain\Products\Models\Product;
 use Domain\Products\Enums\Status;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

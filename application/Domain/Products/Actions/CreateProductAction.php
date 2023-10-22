@@ -2,7 +2,7 @@
 
 namespace Domain\Products\Actions;
 
-use Domain\Products\Model\Product;
+use Domain\Products\Models\Product;
 use Domain\Products\DTO\ProductData;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Domain\Products\Requests;
+namespace Application\Admin\Products\Requests;
 
 use Support\BaseRequest;
 
@@ -13,7 +13,7 @@ class CreateRequest extends BaseRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('product.create');
     }
 
     /**

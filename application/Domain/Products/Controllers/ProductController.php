@@ -2,31 +2,14 @@
 
 namespace Domain\Products\Controllers;
 
-use Domain\Products\Model\Product;
-use Domain\Products\Actions\CreateProductAction;
-use Domain\Products\DTO\ProductData;
-use Domain\Products\Requests\CreateRequest;
+use Domain\Products\Models\Product;
+use Domain\Products\Requests\ReadRequest;
 use Support\BaseController;
 
 class ProductController extends BaseController
 {
-    public function index()
+    public function index(ReadRequest $request)
     {
-        return Product::all();
+        return Product::paginate(15);
     }
-
-    public function store(CreateRequest $request, CreateProductAction $action)
-    {
-        $product = $action->run(ProductData::fromRequest($request));
-
-        if ($product) {
-            return response(__("Продукт - {$product->id} успешно создан!"))->json($product);
-        }
-
-        return response(__("Во время создания продукта что-то пошло не так!"), 403);
-    }
-
-//    public function update(UpdateRequest $request, UpdateProductAction $action)
-//    {
-//    }
 }
