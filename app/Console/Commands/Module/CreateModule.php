@@ -71,6 +71,8 @@ class CreateModule extends Command
         $this->domainPaths = get_domain_paths();
         $this->domainNames = get_domain_names();
         $this->modulesList = get_modules_list();
+        $this->directories = config('module.suggested_directories', $this->directories);
+        $this->defaultDirectories = config('module.default_directories', $this->defaultDirectories);
 
         parent::__construct();
     }
@@ -88,7 +90,7 @@ class CreateModule extends Command
     private function generateModule(string $path): void
     {
         $directories = multiselect(
-            label: 'Создать директории ?',
+            label: __("Создать директории ?"),
             options: $this->directories,
             default: $this->defaultDirectories,
         );
@@ -113,7 +115,7 @@ class CreateModule extends Command
     private function registerParams(): Collection
     {
         $layer = select(
-            'В каком слое/домене создать модуль ?',
+            __("В каком слое/домене создать модуль ?"),
             $this->domainNames,
         );
 
@@ -121,26 +123,26 @@ class CreateModule extends Command
          * Валидация модуля
          */
         $moduleName = text(
-            label: 'Имя модуля ?',
-            placeholder: 'Допустим: Products',
+            label: __("Имя модуля ?"),
+            placeholder: __("Допустим: Products"),
             required: true,
             validate: fn (string $modulename) => match (true) {
                 str($modulename)->length() < 3
-                    => 'Имя модуля не может быть короче 3 символов',
+                    => __("Имя модуля не может быть короче 3 символов"),
 
                 (Str::ucfirst($modulename) !== $modulename)
-                    => 'Имя модуля не может начинаться в нижнем регистре',
+                    => __("Имя модуля не может начинаться в нижнем регистре"),
 
                 (Str::isMatch($this->pattern, $modulename))
-                    => 'Имя модуля не должно включать специальных символов',
+                    => __("Имя модуля не должно включать специальных символов"),
 
                 default
                     => null,
             },
-            hint: 'Имя модуля должно начинаться с заглавной буквы и без специальных символов'
+            hint: __("Имя модуля должно начинаться с заглавной буквы и без специальных символов")
         );
 
-        $confirm = confirm("Модуль называется {$moduleName} - все верно ?");
+        $confirm = confirm(__("Модуль называется {$moduleName} - все верно ?"));
 
         if ($confirm === false) {
             info(__("Пробуем заново!"));
