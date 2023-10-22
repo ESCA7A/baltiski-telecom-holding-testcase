@@ -25,6 +25,11 @@ if (! function_exists('get_application_path')) {
 }
 
 if (! function_exists('get_files_path_by_prefix')) {
+    /**
+     * Функция возвращает абсолютный путь к файлам имеющим в пути префикс
+     *
+     * Из-за того что функция работает рекурсивно, префикс обязан быть наиболее ближайшим к искомым файлам
+     */
     function get_files_path_by_prefix(string $prefix, ?string $basePath = null): Collection
     {
         $baseNamespace = is_null($basePath) ? get_base_path_from_composer() : $basePath;
@@ -53,6 +58,11 @@ if (! function_exists('get_files_path_by_prefix')) {
 }
 
 if (! function_exists('get_dirs_path_by_prefix')) {
+    /**
+     * Функция возвращает абсолютный путь к директориям имеющим в пути префикс
+     *
+     * Из-за того что функция работает рекурсивно, префикс обязан быть наиболее ближайшим к искомым директориям
+     */
     function get_dirs_path_by_prefix(string $prefix, ?string $basePath = null): Collection
     {
         $baseNamespace = is_null($basePath) ? get_base_path_from_composer() : $basePath;
@@ -81,13 +91,21 @@ if (! function_exists('get_dirs_path_by_prefix')) {
 }
 
 if (! function_exists('get_base_path_from_composer')) {
-    function get_base_path_from_composer(): string
+    /**
+     * Функция возвращает @имя_директории в которой регистрируются все слои в приложении
+     * Для того что бы функция работала корректно, вам необходимо передать имя зарегистрированного слоя
+     * в composer.json секция "autoload": "Namespace\\" : "@имя_директории/Название_Домена"
+     *
+     * Имя директории - это название первого вложения в строке объявления autoload секции в composer.json
+     *
+     */
+    function get_base_path_from_composer(string $layer = 'domain'): string
     {
         $cleanBasePathDirectory = '';
 
         try {
             $composer = file(base_path().'/composer.json');
-            $domainPath = collect($composer)->filter(fn ($string) => Str::contains($string, 'domain', true));
+            $domainPath = collect($composer)->filter(fn ($string) => Str::contains($string, $layer, true));
             $namespace = Str::between($domainPath->first(), ':', '/');
             $dirtyBasePathDirectory = Str::before($namespace, '/');
             $cleanBasePathDirectory = Str::replace(['', ' ', '"'], '', $dirtyBasePathDirectory);
@@ -102,6 +120,9 @@ if (! function_exists('get_base_path_from_composer')) {
 }
 
 if (! function_exists('get_domain_names')) {
+    /**
+     * Возвращает все имена доменов даже если они не зарегистрированы в автозагрузчике
+     */
     function get_domain_names(): Collection
     {
         try {
@@ -116,6 +137,9 @@ if (! function_exists('get_domain_names')) {
 }
 
 if (! function_exists('get_domain_paths')) {
+    /**
+     * Возвращает все пути доменов даже если они не зарегистрированы в автозагрузчике
+     */
     function get_domain_paths(): Collection
     {
         try {
@@ -131,6 +155,11 @@ if (! function_exists('get_domain_paths')) {
 }
 
 if (! function_exists('get_path_by_domain')) {
+    /**
+     * Возвращает путь домена по его названию
+     *
+     * (даже если домен не зарегистрирован в секции "autoload")
+     */
     function get_path_by_domain(string $domain): Collection
     {
         try {
@@ -145,6 +174,11 @@ if (! function_exists('get_path_by_domain')) {
 }
 
 if (! function_exists('get_modules_list')) {
+    /**
+     * Возвращает список модулей в проекте по домену (если передан) либо всех доменов
+     *
+     * (даже если домены не зарегистрированы в секции "autoload")
+     */
     function get_modules_list(?string $domain = null): Collection
     {
         try {
@@ -174,6 +208,11 @@ if (! function_exists('get_modules_list')) {
 }
 
 if (! function_exists('get_domain_by_path')) {
+    /**
+     * Возвращает имя домена
+     *
+     * (даже если домен не зарегистрирован в секции "autoload")
+     */
     function get_domain_by_path(string $path): string
     {
         try {
@@ -185,6 +224,11 @@ if (! function_exists('get_domain_by_path')) {
 }
 
 if (! function_exists('module_is_exist')) {
+    /**
+     * Существует ли модуль ?
+     *
+     * (Работает даже если домен не зарегистрирован в секции "autoload")
+     */
     function module_is_exist(string $domainName, string $modulename): bool
     {
         try {

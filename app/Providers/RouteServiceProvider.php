@@ -25,6 +25,7 @@ class RouteServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->rateLimitRegister();
+        $this->domainRoutesRegister();
 
         $this->routes(function () {
             Route::middleware('api')
@@ -44,6 +45,7 @@ class RouteServiceProvider extends ServiceProvider
 
     private function domainRoutesRegister(): void
     {
+        dd(get_files_path_by_prefix('routes'));
         $routes = get_files_path_by_prefix('routes')->toArray();
 
         Route::namespace($this->namespace)
