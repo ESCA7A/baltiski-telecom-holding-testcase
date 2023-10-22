@@ -15,7 +15,7 @@ class BuildRoles extends Command
      *
      * @var string
      */
-    protected $signature = 'build:roles';
+    protected $signature = 'app:build:roles';
 
     /**
      * The console command description.
