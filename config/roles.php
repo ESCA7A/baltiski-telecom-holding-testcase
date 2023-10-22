@@ -2,7 +2,7 @@
 
 return [
     [
-        'name' => "admin",
+        'name' => 'admin',
         'title' => 'Администратор',
         'permissions' => [
             'product.create',
@@ -12,7 +12,7 @@ return [
         ],
     ],
     [
-        'name' => "client",
+        'name' => 'client',
         'title' => 'Клиент',
         'permissions' => [
             'product.read',
