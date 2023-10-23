@@ -175,7 +175,7 @@ if (! function_exists('get_path_by_domain')) {
 
 if (! function_exists('get_modules_list')) {
     /**
-     * Возвращает список модулей в проекте по домену (если передан) либо всех доменов
+     * Возвращает список модулей (Коллекция коллекций) в проекте по домену (если передан) либо всех доменов
      *
      * (даже если домены не зарегистрированы в секции "autoload")
      */
@@ -188,7 +188,7 @@ if (! function_exists('get_modules_list')) {
                 $dirs = collect(scandir($path));
                 $modules = $dirs->filter(fn ($dir) => !Str::isMatch('/[.]+/', $dir));
 
-                return collect([$domain => $modules->toArray()]);
+                return collect([$domain => $modules]);
             }
 
             $domains = get_domain_paths();

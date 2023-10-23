@@ -39,11 +39,6 @@ class CreateModule extends Command
      */
     private Collection $domainNames;
 
-    /**
-     * Лист всех модулей
-     */
-    private Collection $modulesList;
-
     private array $directories = [
         'Actions',
         'Controllers',
@@ -66,7 +61,6 @@ class CreateModule extends Command
     {
         $this->domainPaths = get_domain_paths();
         $this->domainNames = get_domain_names();
-        $this->modulesList = get_modules_list();
         $this->directories = config('module.suggested_directories', $this->directories);
         $this->defaultDirectories = config('module.default_directories', $this->defaultDirectories);
 

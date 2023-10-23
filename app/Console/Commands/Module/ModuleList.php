@@ -33,6 +33,6 @@ class ModuleList extends Command
      */
     public function handle()
     {
-        dd($this->modulesList->toArray());
+        dd($this->modulesList);
     }
 }
