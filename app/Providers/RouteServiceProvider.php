@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
+use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 
@@ -26,14 +27,6 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->rateLimitRegister();
         $this->domainRoutesRegister();
-
-        $this->routes(function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/api.php'));
-
-            $this->domainRoutesRegister();
-        });
     }
 
     private function rateLimitRegister(): void
@@ -47,7 +40,7 @@ class RouteServiceProvider extends ServiceProvider
     {
         $routes = get_files_path_by_prefix('routes')->toArray();
 
-        Route::namespace($this->namespace)
+        Route::middleware('api')
             ->group($routes);
     }
 }
