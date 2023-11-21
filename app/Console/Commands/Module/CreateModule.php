@@ -58,6 +58,21 @@ class CreateModule extends LayerGenerator
         $this->generateModule($path);
     }
 
+    private function generatePath(Collection $params): string
+    {
+        $layerName = $params['domain'];
+        $modulename = $params['modulename'];
+        $path = get_path_by_domain($layerName);
+        $path->push($modulename);
+
+        if (module_is_exist($layerName, $modulename)) {
+            alert(__("Такой модуль уже существует"));
+            $this->handle();
+        }
+
+        return $path->implode('/');
+    }
+
     private function generateModule(string $path): void
     {
         $directories = multiselect(
@@ -82,20 +97,5 @@ class CreateModule extends LayerGenerator
             error($e->getMessage());
             exit();
         }
-    }
-
-    private function generatePath(Collection $params): string
-    {
-        $layerName = $params['domain'];
-        $modulename = $params['modulename'];
-        $path = get_path_by_domain($layerName);
-        $path->push($modulename);
-
-        if (module_is_exist($layerName, $modulename)) {
-            alert(__("Такой модуль уже существует"));
-            $this->handle();
-        }
-
-        return $path->implode('/');
     }
 }
