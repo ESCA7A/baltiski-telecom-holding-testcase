@@ -11,13 +11,20 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 /**
+ * @property string $excludeDirectoryMatch
  * @method Collection|string getApplicationBasePath()
  */
 final class ApplicationIterator
 {
+    /**
+     * Исключаемый паттерн текущей директории и внешней
+     */
+    readonly protected string $excludeDirectoryMatch;
+
     public function __construct(string $anyDonain = 'domain', ?string $rootApplicationDir = null)
     {
-        $this->baseDomain = $anyDonain;
+        $this->excludeDirectoryMatch = '/[.]+/';
+        $this->domainName = $anyDonain;
         $this->rootApplicationDir = $rootApplicationDir ?? $this->getRootApplicationDirFromComposer();
     }
 
@@ -31,7 +38,7 @@ final class ApplicationIterator
     {
 
         try {
-            $composerRootName = get_base_path_from_composer();
+            $composerRootName = $this->getRootApplicationDirFromComposer();
             $basePath = base_path();
             $rootName =& $composerRootName ?? $rootName;
         } catch (Throwable $e) {
@@ -87,10 +94,15 @@ final class ApplicationIterator
      */
     public function getDirsPathByPrefix(string $prefix, ?string $basePath = null): Collection
     {
-        $basePath = base_path($this->rootApplicationDir);
-        $rdi = new RecursiveDirectoryIterator($basePath, FilesystemIterator::KEY_AS_PATHNAME);
-        $recursiveIterator = new RecursiveIteratorIterator($rdi);
-        $pathsCollect = collect();
+        try {
+            $basePath = base_path($this->rootApplicationDir);
+            $rdi = new RecursiveDirectoryIterator($basePath, FilesystemIterator::KEY_AS_PATHNAME);
+            $recursiveIterator = new RecursiveIteratorIterator($rdi);
+            $pathsCollect = collect();
+        } catch (Throwable $e) {
+
+        }
+
 
         /**
          * @var RecursiveDirectoryIterator $item
@@ -128,108 +140,102 @@ final class ApplicationIterator
 
         try {
             $composerjson = file("{$basePath}/{$composerjson}");
-            $domainPath = collect($composerjson)->filter(fn ($row) => Str::contains($row, $this->baseDomain, $ignoreCase = true));
+            $domainPath = collect($composerjson)->filter(fn ($row) => Str::contains($row, $this->domainName, $ignoreCase = true));
             $rootDirName = str($domainPath->first())->after(':')->before('/')->replace(['"', ' '], '');
         } catch (Throwable $e) {
-            error_log(__('Не удалось определить директорию приложения. :message', [
-                'message' => $e->getMessage(),
-            ]));
+            error_log(__('Не удалось определить директорию приложения. :msg', ['msg' => $e->getMessage()]));
         }
 
         return $rootDirName;
     }
 
     /**
-     * Возвращает все имена доменов даже если они не зарегистрированы в автозагрузчике
+     * Возвращает все имена доменов из директории приложения
      */
-    public function get_domain_names(): Collection
+    public function getDomainNames(): Collection
     {
         try {
-            $appPath = get_application_path()->implode('/');
-            $dirs = collect(scandir($appPath));
+            $appPath = $this->getApplicationBasePath()->implode('/');
+            $domains = collect(scandir($appPath))->filter(fn ($item) => !Str::isMatch('/[.]+/', $item));
 
-            return $dirs->filter(fn ($domain) => !Str::isMatch('/[.]+/', $domain));
+            return $domains;
         } catch (Throwable $e) {
-            error_log(__("Что-то пошло не так: :msg", ['msg' => $e->getMessage()]));
+            error_log(__('Поиск доменных имен завершился ошибкой: :msg', ['msg' => $e->getMessage()]));
         }
     }
 
     /**
-     * Возвращает все пути доменов даже если они не зарегистрированы в автозагрузчике
+     * Возвращает все пути доменов из директории приложения
      */
-    public function get_domain_paths(): Collection
+    public function getDomainPaths(): Collection
     {
         try {
-            $basePath = collect([get_application_path()->implode('/')]);
-            $domainNames = get_domain_names();
+            $basePath = collect([$this->getApplicationBasePath()->implode('/')]);
+            $domainNames = $this->getDomainNames();
             $crossJoin = Arr::crossJoin($basePath->toArray(), $domainNames->toArray());
 
             return collect($crossJoin)->map(fn ($path) => implode('/', $path));
         } catch (Throwable $e) {
-            error_log(__("Что-то пошло не так: :msg", ['msg' => $e->getMessage()]));
+            error_log(__('Во время поиска доменных путей возникла ошибка: :msg', ['msg' => $e->getMessage()]));
         }
     }
 
     /**
-     * Возвращает путь домена по его названию
-     *
-     * (даже если домен не зарегистрирован в секции "autoload")
+     * Возвращает путь домена по названию
      */
-    public function get_path_by_domain(string $domain): Collection
+    public function getPathByDomain(string $domain): Collection
     {
         try {
-            $domainPaths = get_domain_paths();
+            $domain = str($domain)->lower()->ucfirst();
+            $domainPaths = $this->getDomainPaths();
 
             return $domainPaths->filter(fn ($path) => Str::contains($path, $domain));
 
         } catch (Throwable $e) {
-            error_log(__("Что-то пошло не так: :msg", ['msg' => $e->getMessage()]));
+            error_log(__('Поиск домена по переданному имени завершился ошибкой: :msg', ['msg' => $e->getMessage()]));
         }
     }
 
     /**
      * Возвращает список модулей (Коллекция коллекций) в проекте по домену (если передан) либо всех доменов
-     *
-     * (даже если домены не зарегистрированы в секции "autoload")
      */
-    public function get_modules_list(?string $domain = null): Collection
+    public function getModulesList(?string $domain = null): Collection
     {
         try {
             if ($domain) {
-                $domainPath = get_path_by_domain($domain);
+                $domain = str($domain)->lower()->ucfirst();
+                $domainPath = $this->getPathByDomain($domain);
                 $path = $domainPath->implode('');
                 $dirs = collect(scandir($path));
-                $modules = $dirs->filter(fn ($dir) => !Str::isMatch('/[.]+/', $dir));
+                $modules = $dirs->filter(fn ($dir) => !Str::isMatch($this->excludeDirectoryMatch, $dir));
 
                 return collect([$domain => $modules]);
             }
 
-            $domains = get_domain_paths();
+            $domains = $this->getDomainPaths();
             $modules = $domains->map(function ($domain) {
-                $domainName = get_domain_by_path($domain);
+                $domainName = $this->getDomainByPath($domain);
                 $dirs = collect(scandir($domain));
-                $modules = $dirs->filter(fn ($dir) => !Str::isMatch('/[.]+/', $dir));
+                $modules = $dirs->filter(fn ($dir) => !Str::isMatch($this->excludeDirectoryMatch, $dir));
 
                 return collect([$domainName => $modules]);
             });
 
             return $modules;
         } catch (Throwable $e) {
-            error_log(__("Что-то пошло не так: :msg", ['msg' => $e->getMessage()]));
+            error_log(__('Не удалось получить список модулей: :msg', ['msg' => $e->getMessage()]));
         }
     }
 
     /**
      * Возвращает имя домена
-     *
-     * (даже если домен не зарегистрирован в секции "autoload")
      */
-    public function get_domain_by_path(string $path): string
+    public function getDomainByPath(string $path): string
     {
         try {
-            return Str::afterLast($path, '/');
+            return str($path)->between("{$this->rootApplicationDir}/", '/')->before('/');
         } catch (Throwable $e) {
-            error_log(__("Что-то пошло не так: :msg", ['msg' => $e->getMessage()]));
+            error_log(__('Домен в пути не найден: :msg', ['msg' => $e->getMessage()]));
         }
     }
 }
